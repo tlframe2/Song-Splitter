@@ -117,7 +117,7 @@ class Splitter():
         Scrapes time links from YouTube page and adds them to list.
         
         Returns:
-            timeList: list of strings of song times scraped from webpage.
+            time_list: list of strings of song times scraped from webpage.
         """
 
         try:
