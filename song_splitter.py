@@ -133,11 +133,11 @@ class Splitter():
             bsObj = BeautifulSoup(html, "lxml")
 
             # Identifies anchor tags on page as time links and adds them to list as strings
-            timeList = []
-            timeLinks = bsObj.findAll("a", {"href": "#"})
-            for link in timeLinks:
-                timeList.append(link.get_text())
-            return timeList
+            time_list = []
+            time_links = bsObj.findAll("a", {"href": "#"})
+            for link in time_links:
+                time_list.append(link.get_text())
+            return time_list
 
     def __time_str_to_tuple(self, time_str):
         """
