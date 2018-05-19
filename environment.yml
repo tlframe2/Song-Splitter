@@ -5,3 +5,4 @@ dependencies:
   - pytube
   - moviepy
   - requests
+  - lxml
