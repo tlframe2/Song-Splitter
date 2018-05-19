@@ -4,3 +4,4 @@ dependencies:
   - beautifulsoup4
   - pytube
   - moviepy
+  - requests
