@@ -1,0 +1,6 @@
+name: song_splitter
+dependencies:
+  - urllib3
+  - beautifulsoup4
+  - pytube
+  - moviepy
