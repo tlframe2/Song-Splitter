@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from moviepy.editor import AudioFileClip
 from pytube import YouTube
 from time import sleep
+from sys import argv
 
 class Downloader():
     """
@@ -32,33 +33,25 @@ class Downloader():
         """
 
         self.url = url
+        self.audio_file = None
         self.filename = " "
         self.file_size = 0
 
+    def get_video_info(self):
+        """ Instantiates YouTube object from PyTube module and assigns video info to Downloader object's attributes. """
+
+        yt = YouTube(self.url, on_progress_callback=self.progress_check)
+        
+        self.audio_file = yt.streams.filter(only_audio=True, file_extension='mp4').first()
+        self.filename = yt.title + '.mp4'
+        self.file_size = self.audio_file.filesize
+
     def download_file(self):
-        """ Downloads audio file. """
+        """ Downloads file to same location as this script. """
 
-        try:
-            # Instantiates YouTube object from Pytube module
-            yt = YouTube(self.url, on_progress_callback=self.__progress_check)
+        self.audio_file.download()
 
-            # Finds highest quality audio stream
-            audio_file = yt.streams.filter(only_audio=True, file_extension='mp4').first()
-
-            # Sets filename attribute to title of video
-            self.filename = yt.title + '.mp4'
-
-            # Sets file_size attribute to number of bytes in audio file
-            self.file_size = audio_file.filesize
-
-            # Downloads audio file
-            audio_file.download()
-
-        except:
-            # Prints error message if video cannot be found at given url
-            print("Could not find video at url '{}'".format(self.url))
-
-    def __progress_check(self, stream=None, chunk=None, file_handle=None, remaining=None):
+    def progress_check(self, stream=None, chunk=None, file_handle=None, remaining=None):
         """ 
         Calculates and displays percentage of file that has been downloaded. 
         
@@ -97,22 +90,22 @@ class Splitter():
         audio = AudioFileClip(self.filename)
 
         # List of time links scraped from audio file's YouTube page
-        times = self.__get_time_links()
+        times = self.get_time_links()
 
         # Creates songs based on number of time links scraped
         for i in range(0, len(times)):
 
             # Time when song starts in audio file
-            start_time = self.__time_str_to_tuple(times[i])
+            start_time = Splitter.time_str_to_tuple(times[i])
 
             # Time when song ends in audio file or None if last song
-            end_time = None if i == (len(times) - 1) else self.__time_str_to_tuple(times[i + 1])
+            end_time = None if i == (len(times) - 1) else Splitter.time_str_to_tuple(times[i + 1])
 
             # Creates song
             song = audio.subclip(start_time, end_time)
             song.write_audiofile("clip{}.mp3".format(i+1))
 
-    def __get_time_links(self):
+    def get_time_links(self):
         """ 
         Scrapes time links from YouTube page and adds them to list.
         
@@ -135,16 +128,21 @@ class Splitter():
             # Identifies anchor tags on page as time links and adds them to list as strings
             time_list = []
             time_links = bsObj.findAll("a", {"href": "#"})
+            
             for link in time_links:
                 time_list.append(link.get_text())
             return time_list
 
-    def __time_str_to_tuple(self, time_str):
+    @staticmethod
+    def time_str_to_tuple(time_str):
         """
         Converts times from strings to tuples.
 
+        Parameters:
+            time_str (string): time song starts in video
+
         Returns:
-            tuple: time converted to tuple as either (mm,ss) or (hh,mm,ss)
+            tuple of time_str converted to either (mm,ss) or (hh,mm,ss)
         """
 
         return tuple(map(int, time_str.split(":")))
@@ -152,20 +150,21 @@ class Splitter():
 def main():
     """ Main function. """
 
-    # Prompts user for video url
-    url = input("Enter video url: ")
+    # Prompts user for video url if none is given as a command line argument
+    url = input("Enter video url: ") if len(argv) == 1 else argv[1]
 
     # Instantiates Downloader object using given url
-    download = Downloader(url)
+    dl = Downloader(url)
 
     # Downloads audio file
-    download.download_file()
+    dl.get_video_info()
+    dl.download_file()
 
     # Instantiates Splitter object using attributes of Downloader object
-    splitter = Splitter(download)
+    split = Splitter(dl)
 
     # Splits audio file into individual songs
-    splitter.split_songs()
+    split.split_songs()
 
 if __name__ == '__main__':
 
